@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 export default function RunnerPortal({ bib }) {
-  const ingestSecret = "ingest-runner-position";
+  const ingestSecret = "ingest-runner-position"; // keep it here
   const [sharing, setSharing] = useState(false);
   const watchIdRef = useRef(null);
 
@@ -35,19 +35,14 @@ export default function RunnerPortal({ bib }) {
       alert("Geolocation is not supported by your browser.");
       return;
     }
-
-    // Start watching position with high accuracy
     const watchId = navigator.geolocation.watchPosition(
       sendLocation,
       (err) => {
-        alert(
-          "Error getting location. Please allow location access in your browser."
-        );
+        alert("Error getting location. Please allow location access in your browser.");
         console.error(err);
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
     );
-
     watchIdRef.current = watchId;
     setSharing(true);
   };
@@ -60,12 +55,9 @@ export default function RunnerPortal({ bib }) {
     }
   };
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     };
   }, []);
 

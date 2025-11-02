@@ -7,7 +7,6 @@ export default function RunnerMap() {
   const [runners, setRunners] = useState({});
 
   useEffect(() => {
-    // Initial fetch
     const fetchRunners = async () => {
       const { data, error } = await supabase
         .from("current_positions")
@@ -27,7 +26,6 @@ export default function RunnerMap() {
     };
     fetchRunners();
 
-    // Realtime subscription
     const subscription = supabase
       .channel("public:current_positions")
       .on(
@@ -43,7 +41,7 @@ export default function RunnerMap() {
 
   return (
     <MapContainer
-      center={[40.7128, -74.0060]}
+      center={[51.2194, 4.4025]} // Antwerp coordinates
       zoom={13}
       style={{ height: "90vh", width: "100%" }}
     >
@@ -51,10 +49,10 @@ export default function RunnerMap() {
       {Object.values(runners).map((r) => (
         <Marker key={r.runner_id} position={[r.latitude, r.longitude]}>
           <Popup>
-            <b>{r.runners.name}</b> <br />
-            Bib: {r.runners.bib} <br />
-            Team: {r.runners.team || "N/A"} <br />
-            Last Update: {new Date(r.recorded_at).toLocaleTimeString()}
+            <b>{r.runners?.name ?? "Unknown"}</b> <br />
+            Bib: {r.runners?.bib ?? "N/A"} <br />
+            Team: {r.runners?.team ?? "N/A"} <br />
+            Last Update: {r.recorded_at ? new Date(r.recorded_at).toLocaleTimeString() : "N/A"}
           </Popup>
         </Marker>
       ))}
