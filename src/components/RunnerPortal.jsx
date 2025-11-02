@@ -1,22 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
 
-export default function RunnerPortal({ bib }) {
-  const ingestSecret = "ingest-runner-position"; // keep it here
+export default function RunnerPortal() {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [sharing, setSharing] = useState(false);
   const watchIdRef = useRef(null);
 
   const sendLocation = async (position) => {
     try {
-      await fetch(
+      const res = await fetch(
         "https://uevrynlpqflpdbuezfep.supabase.co/functions/v1/ingest-runner-position",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${ingestSecret}`,
           },
           body: JSON.stringify({
-            bib,
+            firstName,
+            lastName,
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy,
@@ -24,7 +25,9 @@ export default function RunnerPortal({ bib }) {
           }),
         }
       );
-      console.log("Location sent:", position.coords);
+      // Optional: log response for debugging
+      console.log("Status:", res.status);
+      console.log("Response:", await res.text());
     } catch (err) {
       console.error("Error sending location:", err);
     }
@@ -63,21 +66,38 @@ export default function RunnerPortal({ bib }) {
 
   return (
     <div style={{ textAlign: "center", padding: "2rem" }}>
-      <h2>Runner {bib}</h2>
+      <h2>Runner Portal</h2>
       {!sharing ? (
-        <button
-          onClick={startSharing}
-          style={{
-            padding: "1rem 2rem",
-            fontSize: "1.2rem",
-            backgroundColor: "#4caf50",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-          }}
-        >
-          Start Sharing Location
-        </button>
+        <>
+          <input
+            type="text"
+            placeholder="First Name"
+            value={firstName}
+            onChange={e => setFirstName(e.target.value)}
+            style={{ margin: "0.5rem" }}
+          />
+          <input
+            type="text"
+            placeholder="Last Name"
+            value={lastName}
+            onChange={e => setLastName(e.target.value)}
+            style={{ margin: "0.5rem" }}
+          />
+          <button
+            onClick={startSharing}
+            style={{
+              padding: "1rem 2rem",
+              fontSize: "1.2rem",
+              backgroundColor: "#4caf50",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+            }}
+            disabled={!firstName || !lastName}
+          >
+            Start Sharing Location
+          </button>
+        </>
       ) : (
         <>
           <p>Sharing your location… make sure GPS is enabled.</p>
