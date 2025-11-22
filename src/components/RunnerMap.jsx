@@ -8,9 +8,10 @@ export default function RunnerMap() {
   const [runners, setRunners] = useState({});
 
   useEffect(() => {
+    // Fetch all runners initially
     const fetchRunners = async () => {
       const { data, error } = await supabase
-        .from("runner_positions") // updated table name
+        .from("runner_positions")
         .select(`
           id,
           first_name,
@@ -20,8 +21,9 @@ export default function RunnerMap() {
           accuracy,
           recorded_at
         `);
-      if (error) console.error(error);
-      else {
+      if (error) {
+        console.error(error);
+      } else {
         const obj = {};
         data.forEach((r) => (obj[r.id] = r));
         setRunners(obj);
@@ -29,22 +31,50 @@ export default function RunnerMap() {
     };
     fetchRunners();
 
-    // Optional: subscribe to changes if you want live updates (requires Supabase Realtime enabled)
-    // Remove or update this if you don't have Realtime enabled for runner_positions
-    const subscription = supabase
-      .channel("public:runner_positions")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "runner_positions" },
-        (payload) =>
-          setRunners((prev) => ({
-            ...prev,
-            [payload.new.id]: payload.new,
-          }))
-      )
-      .subscribe();
+    // Set up Realtime subscription for INSERT, UPDATE, DELETE
+    const channel = supabase.channel("public:runner_positions");
 
-    return () => supabase.removeChannel(subscription);
+    // INSERT event
+    channel.on(
+      "postgres_changes",
+      { event: "INSERT", schema: "public", table: "runner_positions" },
+      (payload) =>
+        setRunners((prev) => ({
+          ...prev,
+          [payload.new.id]: payload.new,
+        }))
+    );
+
+    // UPDATE event
+    channel.on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: "runner_positions" },
+      (payload) =>
+        setRunners((prev) => ({
+          ...prev,
+          [payload.new.id]: payload.new,
+        }))
+    );
+
+    // DELETE event
+    channel.on(
+      "postgres_changes",
+      { event: "DELETE", schema: "public", table: "runner_positions" },
+      (payload) => {
+        setRunners((prev) => {
+          const updated = { ...prev };
+          delete updated[payload.old.id];
+          return updated;
+        });
+      }
+    );
+
+    channel.subscribe();
+
+    // Cleanup on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
