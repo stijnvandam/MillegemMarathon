@@ -1,4 +1,6 @@
+
 import React, { useState, useRef, useEffect } from "react";
+import { supabase } from "../supabaseClient.js"; // Make sure this import is correct
 
 export default function RunnerPortal() {
   const [firstName, setFirstName] = useState("");
@@ -6,30 +8,21 @@ export default function RunnerPortal() {
   const [sharing, setSharing] = useState(false);
   const watchIdRef = useRef(null);
 
+  // Updated: Send data directly to Supabase
   const sendLocation = async (position) => {
-    try {
-      const res = await fetch(
-        "https://uevrynlpqflpdbuezfep.supabase.co/functions/v1/ingest-runner-position",
+    const { error } = await supabase
+      .from("runner_positions") // Use your new table name
+      .insert([
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            firstName,
-            lastName,
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            source: "phone",
-          }),
-        }
-      );
-      // Optional: log response for debugging
-      console.log("Status:", res.status);
-      console.log("Response:", await res.text());
-    } catch (err) {
-      console.error("Error sending location:", err);
+          first_name: firstName,
+          last_name: lastName,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        },
+      ]);
+    if (error) {
+      console.error("Error inserting data:", error);
     }
   };
 
