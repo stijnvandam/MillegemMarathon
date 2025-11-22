@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { supabase } from "../supabaseClient.js";
@@ -9,30 +10,37 @@ export default function RunnerMap() {
   useEffect(() => {
     const fetchRunners = async () => {
       const { data, error } = await supabase
-        .from("current_positions")
+        .from("runner_positions") // updated table name
         .select(`
-          runner_id,
+          id,
+          first_name,
+          last_name,
           latitude,
           longitude,
-          recorded_at,
-          runners(name, bib, team)
+          accuracy,
+          recorded_at
         `);
       if (error) console.error(error);
       else {
         const obj = {};
-        data.forEach((r) => (obj[r.runner_id] = r));
+        data.forEach((r) => (obj[r.id] = r));
         setRunners(obj);
       }
     };
     fetchRunners();
 
+    // Optional: subscribe to changes if you want live updates (requires Supabase Realtime enabled)
+    // Remove or update this if you don't have Realtime enabled for runner_positions
     const subscription = supabase
-      .channel("public:current_positions")
+      .channel("public:runner_positions")
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "current_positions" },
+        { event: "INSERT", schema: "public", table: "runner_positions" },
         (payload) =>
-          setRunners((prev) => ({ ...prev, [payload.new.runner_id]: payload.new }))
+          setRunners((prev) => ({
+            ...prev,
+            [payload.new.id]: payload.new,
+          }))
       )
       .subscribe();
 
@@ -47,12 +55,18 @@ export default function RunnerMap() {
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       {Object.values(runners).map((r) => (
-        <Marker key={r.runner_id} position={[r.latitude, r.longitude]}>
+        <Marker key={r.id} position={[r.latitude, r.longitude]}>
           <Popup>
-            <b>{r.runners?.name ?? "Unknown"}</b> <br />
-            Bib: {r.runners?.bib ?? "N/A"} <br />
-            Team: {r.runners?.team ?? "N/A"} <br />
-            Last Update: {r.recorded_at ? new Date(r.recorded_at).toLocaleTimeString() : "N/A"}
+            <b>
+              {r.first_name} {r.last_name}
+            </b>
+            <br />
+            Accuracy: {r.accuracy ?? "N/A"}
+            <br />
+            Last Update:{" "}
+            {r.recorded_at
+              ? new Date(r.recorded_at).toLocaleTimeString()
+              : "N/A"}
           </Popup>
         </Marker>
       ))}
