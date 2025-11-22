@@ -26,6 +26,9 @@ export default function RunnerMap() {
   const [runners, setRunners] = useState({});
 
   useEffect(() => {
+    let interval;
+    let channel;
+
     const fetchRunners = async () => {
       const { data, error } = await supabase
         .from("runner_positions")
@@ -54,9 +57,11 @@ export default function RunnerMap() {
         setRunners(latest);
       }
     };
-    fetchRunners();
 
-    const channel = supabase.channel("public:runner_positions");
+    fetchRunners();
+    interval = setInterval(fetchRunners, 30000); // Refresh every 30 seconds
+
+    channel = supabase.channel("public:runner_positions");
 
     // INSERT and UPDATE events
     const upsertRunner = (payload) => {
@@ -98,6 +103,7 @@ export default function RunnerMap() {
     channel.subscribe();
 
     return () => {
+      clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, []);
