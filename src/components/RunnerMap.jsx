@@ -59,7 +59,7 @@ export default function RunnerMap() {
     };
 
     fetchRunners();
-    interval = setInterval(fetchRunners, 10000); // Refresh every 10 seconds
+    interval = setInterval(fetchRunners, 60000); // Refresh every 60 seconds
 
     channel = supabase.channel("public:runner_positions");
 
