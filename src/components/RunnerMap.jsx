@@ -110,7 +110,7 @@ export default function RunnerMap() {
 
   return (
     <MapContainer
-      center={[51.2194, 4.4025]}
+      center={[51.2020, 4.5700]} // Ranst, Belgium
       zoom={13}
       style={{ height: "90vh", width: "100%" }}
     >
